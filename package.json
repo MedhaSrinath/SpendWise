@@ -1,0 +1,13 @@
+{
+  "name": "spendwise",
+  "version": "1.0.0",
+  "description": "SpendWise - Smart Personal Expense & Financial Tracker",
+  "scripts": {
+    "server": "npm run dev --prefix backend",
+    "client": "npm run dev --prefix frontend",
+    "build": "npm run build --prefix frontend"
+  },
+  "keywords": ["react", "express", "expense-tracker", "fullstack"],
+  "author": "Medha Srinath",
+  "license": "MIT"
+}
