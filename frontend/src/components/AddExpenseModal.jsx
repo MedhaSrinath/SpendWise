@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Plus, AlertCircle } from 'lucide-react';
+import { X, AlertCircle } from 'lucide-react';
 
 const EXPENSE_CATEGORIES = [
   'Groceries',
@@ -16,14 +16,14 @@ const EXPENSE_CATEGORIES = [
 const PAYMENT_METHODS = ['UPI', 'Debit Card', 'Credit Card', 'Cash', 'Net Banking'];
 
 export const AddExpenseModal = ({ isOpen, onClose, onAddExpense }) => {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState(() => ({
     title: '',
     amount: '',
     category: 'Groceries',
     date: new Date().toISOString().split('T')[0],
     paymentMethod: 'UPI',
     notes: '',
-  });
+  }));
 
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -45,7 +45,7 @@ export const AddExpenseModal = ({ isOpen, onClose, onAddExpense }) => {
     }
     if (!formData.amount) {
       newErrors.amount = 'Amount is required';
-    } else if (isNaN(formData.amount) || Number(formData.amount) <= 0) {
+    } else if (!Number.isFinite(Number(formData.amount)) || Number(formData.amount) <= 0) {
       newErrors.amount = 'Enter a valid amount (> 0)';
     }
     if (!formData.date) {

@@ -27,6 +27,11 @@ export const api = {
     return response.data;
   },
 
+  updateExpense: async (id, expenseData) => {
+    const response = await apiClient.put(`/expenses/${id}`, expenseData);
+    return response.data;
+  },
+
   deleteExpense: async (id) => {
     const response = await apiClient.delete(`/expenses/${id}`);
     return response.data;
@@ -40,6 +45,11 @@ export const api = {
 
   addIncome: async (incomeData) => {
     const response = await apiClient.post('/income', incomeData);
+    return response.data;
+  },
+
+  updateIncome: async (id, incomeData) => {
+    const response = await apiClient.put(`/income/${id}`, incomeData);
     return response.data;
   },
 

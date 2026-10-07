@@ -1,8 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   PieChart,
   Loader2,
-  RefreshCw,
   CheckCircle,
 } from 'lucide-react';
 import api from '../services/api';
@@ -12,25 +11,26 @@ export const Analytics = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const fetchAnalytics = async () => {
+  const fetchAnalytics = useCallback(async () => {
     try {
-      setLoading(true);
-      setError(null);
       const res = await api.getDashboardSummary();
       if (res.success) {
         setSummary(res.data);
       }
+      setError(null);
     } catch (err) {
       console.error('Error loading analytics:', err);
       setError('Failed to fetch analytics from backend.');
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
+    // The fetch updates loading state only after its asynchronous request settles.
+    // eslint-disable-next-line react/set-state-in-effect
     fetchAnalytics();
-  }, []);
+  }, [fetchAnalytics]);
 
   if (loading) {
     return (
@@ -50,6 +50,7 @@ export const Analytics = () => {
   }
 
   const {
+    month = 'This Month',
     totalIncome = 0,
     totalExpense = 0,
     balance = 0,
@@ -66,7 +67,7 @@ export const Analytics = () => {
           <span>Financial Analytics</span>
         </h1>
         <p className="text-xs sm:text-sm text-gray-500 mt-1">
-          Visual spending breakdowns and savings efficiency.
+          {month} spending breakdown and savings efficiency.
         </p>
       </div>
 

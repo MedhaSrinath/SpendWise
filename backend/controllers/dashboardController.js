@@ -2,14 +2,18 @@ import { expenses, incomes, monthlyBudgetLimit } from '../data/store.js';
 
 export const getDashboardSummary = (req, res) => {
   try {
-    const totalIncome = incomes.reduce((sum, item) => sum + item.amount, 0);
-    const totalExpense = expenses.reduce((sum, item) => sum + item.amount, 0);
+    const now = new Date();
+    const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    const monthlyIncomes = incomes.filter(item => item.date.startsWith(currentMonth));
+    const monthlyExpenses = expenses.filter(item => item.date.startsWith(currentMonth));
+    const totalIncome = monthlyIncomes.reduce((sum, item) => sum + item.amount, 0);
+    const totalExpense = monthlyExpenses.reduce((sum, item) => sum + item.amount, 0);
     const balance = totalIncome - totalExpense;
     const savingsRate = totalIncome > 0 ? (((balance) / totalIncome) * 100).toFixed(1) : 0;
 
     // Calculate category-wise expenses
     const categoryTotals = {};
-    expenses.forEach(exp => {
+    monthlyExpenses.forEach(exp => {
       categoryTotals[exp.category] = (categoryTotals[exp.category] || 0) + exp.amount;
     });
 
@@ -21,8 +25,8 @@ export const getDashboardSummary = (req, res) => {
 
     // Recent combined transactions
     const combined = [
-      ...expenses.map(e => ({ ...e, type: 'expense' })),
-      ...incomes.map(i => ({ ...i, type: 'income' }))
+      ...monthlyExpenses.map(e => ({ ...e, type: 'expense' })),
+      ...monthlyIncomes.map(i => ({ ...i, type: 'income' }))
     ].sort((a, b) => new Date(b.date) - new Date(a.date));
 
     // Budget utilization
@@ -34,6 +38,7 @@ export const getDashboardSummary = (req, res) => {
       data: {
         totalIncome,
         totalExpense,
+        month: now.toLocaleString('en-IN', { month: 'long', year: 'numeric' }),
         balance,
         savingsRate: Number(savingsRate),
         monthlyBudgetLimit,
@@ -48,4 +53,3 @@ export const getDashboardSummary = (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
-

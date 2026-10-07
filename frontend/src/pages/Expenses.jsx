@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Search,
   Plus,
@@ -9,6 +9,7 @@ import {
 import api from '../services/api';
 import TransactionItem from '../components/TransactionItem';
 import AddExpenseModal from '../components/AddExpenseModal';
+import EditTransactionModal from '../components/EditTransactionModal';
 
 const CATEGORIES = [
   'All',
@@ -32,12 +33,11 @@ export const Expenses = () => {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingExpense, setEditingExpense] = useState(null);
 
   // Fetch expenses with category and search filter query parameters
-  const fetchExpenses = async () => {
+  const fetchExpenses = useCallback(async () => {
     try {
-      setLoading(true);
-      setError(null);
       const res = await api.getExpenses({
         category: selectedCategory !== 'All' ? selectedCategory : undefined,
         search: searchTerm ? searchTerm : undefined,
@@ -45,17 +45,20 @@ export const Expenses = () => {
       if (res.success) {
         setExpenses(res.data);
       }
+      setError(null);
     } catch (err) {
       console.error('Error fetching expenses:', err);
       setError('Failed to load expenses from backend.');
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedCategory, searchTerm]);
 
   useEffect(() => {
+    // The fetch updates loading state only after its asynchronous request settles.
+    // eslint-disable-next-line react/set-state-in-effect
     fetchExpenses();
-  }, [selectedCategory, searchTerm]);
+  }, [fetchExpenses]);
 
   const handleAddExpense = async (formData) => {
     await api.addExpense(formData);
@@ -64,6 +67,11 @@ export const Expenses = () => {
 
   const handleDeleteExpense = async (id) => {
     await api.deleteExpense(id);
+    await fetchExpenses();
+  };
+
+  const handleUpdateExpense = async (formData) => {
+    await api.updateExpense(editingExpense.id, formData);
     await fetchExpenses();
   };
 
@@ -187,6 +195,7 @@ export const Expenses = () => {
               key={expense.id}
               transaction={{ ...expense, type: 'expense' }}
               onDelete={handleDeleteExpense}
+              onEdit={setEditingExpense}
             />
           ))}
         </div>
@@ -197,6 +206,14 @@ export const Expenses = () => {
         onClose={() => setIsModalOpen(false)}
         onAddExpense={handleAddExpense}
       />
+      {editingExpense && (
+        <EditTransactionModal
+          key={editingExpense.id}
+          transaction={{ ...editingExpense, type: 'expense' }}
+          onClose={() => setEditingExpense(null)}
+          onSave={handleUpdateExpense}
+        />
+      )}
     </div>
   );
 };

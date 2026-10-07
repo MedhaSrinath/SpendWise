@@ -1,18 +1,18 @@
 import React, { useState } from 'react';
-import { X, Plus, AlertCircle } from 'lucide-react';
+import { X, AlertCircle } from 'lucide-react';
 
 const INCOME_CATEGORIES = ['Salary', 'Freelance', 'Investments', 'Allowance', 'Business', 'Other'];
 const PAYMENT_METHODS = ['Direct Deposit', 'UPI', 'Bank Transfer', 'Cash', 'Cheque'];
 
 export const AddIncomeModal = ({ isOpen, onClose, onAddIncome }) => {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState(() => ({
     title: '',
     amount: '',
     category: 'Salary',
     date: new Date().toISOString().split('T')[0],
     paymentMethod: 'Direct Deposit',
     notes: '',
-  });
+  }));
 
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -34,7 +34,7 @@ export const AddIncomeModal = ({ isOpen, onClose, onAddIncome }) => {
     }
     if (!formData.amount) {
       newErrors.amount = 'Amount is required';
-    } else if (isNaN(formData.amount) || Number(formData.amount) <= 0) {
+    } else if (!Number.isFinite(Number(formData.amount)) || Number(formData.amount) <= 0) {
       newErrors.amount = 'Enter a valid amount (> 0)';
     }
     if (!formData.date) {

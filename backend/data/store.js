@@ -1,12 +1,18 @@
 // In-memory / file-ready structured data store with initial sample data
 
+const sampleDate = (day) => {
+  const now = new Date();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  return `${now.getFullYear()}-${month}-${String(day).padStart(2, '0')}`;
+};
+
 export let expenses = [
   {
     id: "exp-1",
     title: "Grocery Shopping",
     amount: 1450,
     category: "Groceries",
-    date: "2026-10-01",
+    date: sampleDate(1),
     paymentMethod: "UPI",
     notes: "Weekly essentials from supermarket"
   },
@@ -15,7 +21,7 @@ export let expenses = [
     title: "Electricity & WiFi Bill",
     amount: 2200,
     category: "Utilities",
-    date: "2026-10-02",
+    date: sampleDate(2),
     paymentMethod: "Net Banking",
     notes: "Monthly broadband and electricity"
   },
@@ -24,7 +30,7 @@ export let expenses = [
     title: "Dinner with Friends",
     amount: 1100,
     category: "Food & Dining",
-    date: "2026-10-03",
+    date: sampleDate(3),
     paymentMethod: "Credit Card",
     notes: "Weekend cafe dining"
   },
@@ -33,7 +39,7 @@ export let expenses = [
     title: "Metro & Cab Commute",
     amount: 650,
     category: "Transportation",
-    date: "2026-10-04",
+    date: sampleDate(4),
     paymentMethod: "UPI",
     notes: "Commute to college/work"
   },
@@ -42,7 +48,7 @@ export let expenses = [
     title: "Cloud Subscriptions",
     amount: 799,
     category: "Entertainment",
-    date: "2026-10-05",
+    date: sampleDate(5),
     paymentMethod: "Debit Card",
     notes: "Streaming & developer services"
   }
@@ -54,7 +60,7 @@ export let incomes = [
     title: "Monthly Stipend / Salary",
     amount: 35000,
     category: "Salary",
-    date: "2026-10-01",
+    date: sampleDate(1),
     paymentMethod: "Direct Deposit",
     notes: "Primary monthly income"
   },
@@ -63,11 +69,10 @@ export let incomes = [
     title: "Freelance Project",
     amount: 8500,
     category: "Freelance",
-    date: "2026-10-03",
+    date: sampleDate(3),
     paymentMethod: "UPI",
     notes: "UI Design milestone payout"
   }
 ];
 
 export const monthlyBudgetLimit = 25000;
-

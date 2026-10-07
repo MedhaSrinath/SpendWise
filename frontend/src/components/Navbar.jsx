@@ -1,5 +1,5 @@
 import React from 'react';
-import { Menu, X, Wallet, Sparkles } from 'lucide-react';
+import { Menu, X, Wallet } from 'lucide-react';
 
 export const Navbar = ({ onToggleSidebar, isSidebarOpen }) => {
   return (

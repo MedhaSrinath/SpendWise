@@ -1,4 +1,5 @@
 import { incomes } from '../data/store.js';
+import { normalizeTransaction } from '../utils/transactionValidation.js';
 
 // GET all income entries
 export const getIncomes = (req, res) => {
@@ -6,13 +7,13 @@ export const getIncomes = (req, res) => {
     const { category, search } = req.query;
     let filtered = [...incomes];
 
-    if (category && category !== 'All') {
+    if (typeof category === 'string' && category !== 'All') {
       filtered = filtered.filter(
         inc => inc.category.toLowerCase() === category.toLowerCase()
       );
     }
 
-    if (search && search.trim() !== '') {
+    if (typeof search === 'string' && search.trim() !== '') {
       const q = search.toLowerCase();
       filtered = filtered.filter(
         inc =>
@@ -37,31 +38,17 @@ export const getIncomes = (req, res) => {
 // POST a new income
 export const addIncome = (req, res) => {
   try {
-    const { title, amount, category, date, paymentMethod, notes } = req.body;
-
-    if (!title || !amount || !category || !date) {
+    const result = normalizeTransaction(req.body, { paymentMethod: 'Direct Deposit', notes: '' });
+    if (result.error) {
       return res.status(400).json({
         success: false,
-        message: 'Please provide title, amount, category, and date.'
-      });
-    }
-
-    const numAmount = parseFloat(amount);
-    if (isNaN(numAmount) || numAmount <= 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'Amount must be a positive number.'
+        message: result.error,
       });
     }
 
     const newIncome = {
       id: `inc-${Date.now()}`,
-      title: title.trim(),
-      amount: numAmount,
-      category: category.trim(),
-      date,
-      paymentMethod: paymentMethod || 'Direct Deposit',
-      notes: notes ? notes.trim() : ''
+      ...result.value,
     };
 
     incomes.unshift(newIncome);
@@ -73,6 +60,33 @@ export const addIncome = (req, res) => {
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// PUT a full income record by ID.
+export const updateIncome = (req, res) => {
+  try {
+    const income = incomes.find(item => item.id === req.params.id);
+    if (!income) {
+      return res.status(404).json({
+        success: false,
+        message: `Income with id ${req.params.id} not found.`,
+      });
+    }
+
+    const result = normalizeTransaction(req.body, income);
+    if (result.error) {
+      return res.status(400).json({ success: false, message: result.error });
+    }
+
+    Object.assign(income, result.value);
+    return res.status(200).json({
+      success: true,
+      message: 'Income updated successfully',
+      data: income,
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
   }
 };
 
@@ -99,4 +113,3 @@ export const deleteIncome = (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
-

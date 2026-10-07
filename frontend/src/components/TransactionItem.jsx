@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { Trash2, TrendingDown, TrendingUp, Calendar, CreditCard } from 'lucide-react';
+import { Pencil, Trash2, TrendingDown, TrendingUp, Calendar, CreditCard } from 'lucide-react';
 import CategoryBadge from './CategoryBadge';
 
-export const TransactionItem = ({ transaction, onDelete }) => {
+export const TransactionItem = ({ transaction, onDelete, onEdit }) => {
   const [isDeleting, setIsDeleting] = useState(false);
   const isExpense = transaction.type === 'expense' || !transaction.type || transaction.type === undefined;
 
@@ -74,11 +74,23 @@ export const TransactionItem = ({ transaction, onDelete }) => {
           {isExpense ? '-' : '+'}₹{Number(transaction.amount).toLocaleString('en-IN')}
         </span>
 
+        {onEdit && (
+          <button
+            onClick={() => onEdit(transaction)}
+            title="Edit transaction"
+            aria-label={`Edit ${transaction.title}`}
+            className="p-1.5 text-gray-400 hover:text-teal-600 hover:bg-teal-50 rounded-lg transition-colors"
+          >
+            <Pencil size={16} />
+          </button>
+        )}
+
         {onDelete && (
           <button
             onClick={handleDelete}
             disabled={isDeleting}
             title="Delete record"
+            aria-label={`Delete ${transaction.title}`}
             className="p-1.5 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors disabled:opacity-50"
           >
             <Trash2 size={16} />

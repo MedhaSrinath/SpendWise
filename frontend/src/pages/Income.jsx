@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Search,
   Plus,
@@ -9,6 +9,7 @@ import {
 import api from '../services/api';
 import TransactionItem from '../components/TransactionItem';
 import AddIncomeModal from '../components/AddIncomeModal';
+import EditTransactionModal from '../components/EditTransactionModal';
 
 const INCOME_CATEGORIES = ['All', 'Salary', 'Freelance', 'Investments', 'Allowance', 'Business', 'Other'];
 
@@ -20,11 +21,10 @@ export const Income = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingIncome, setEditingIncome] = useState(null);
 
-  const fetchIncomes = async () => {
+  const fetchIncomes = useCallback(async () => {
     try {
-      setLoading(true);
-      setError(null);
       const res = await api.getIncomes({
         category: selectedCategory !== 'All' ? selectedCategory : undefined,
         search: searchTerm ? searchTerm : undefined,
@@ -32,17 +32,20 @@ export const Income = () => {
       if (res.success) {
         setIncomes(res.data);
       }
+      setError(null);
     } catch (err) {
       console.error('Error fetching income:', err);
       setError('Failed to load income records from backend.');
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedCategory, searchTerm]);
 
   useEffect(() => {
+    // The fetch updates loading state only after its asynchronous request settles.
+    // eslint-disable-next-line react/set-state-in-effect
     fetchIncomes();
-  }, [selectedCategory, searchTerm]);
+  }, [fetchIncomes]);
 
   const handleAddIncome = async (formData) => {
     await api.addIncome(formData);
@@ -51,6 +54,11 @@ export const Income = () => {
 
   const handleDeleteIncome = async (id) => {
     await api.deleteIncome(id);
+    await fetchIncomes();
+  };
+
+  const handleUpdateIncome = async (formData) => {
+    await api.updateIncome(editingIncome.id, formData);
     await fetchIncomes();
   };
 
@@ -152,6 +160,7 @@ export const Income = () => {
               key={income.id}
               transaction={{ ...income, type: 'income' }}
               onDelete={handleDeleteIncome}
+              onEdit={setEditingIncome}
             />
           ))}
         </div>
@@ -162,6 +171,14 @@ export const Income = () => {
         onClose={() => setIsModalOpen(false)}
         onAddIncome={handleAddIncome}
       />
+      {editingIncome && (
+        <EditTransactionModal
+          key={editingIncome.id}
+          transaction={{ ...editingIncome, type: 'income' }}
+          onClose={() => setEditingIncome(null)}
+          onSave={handleUpdateIncome}
+        />
+      )}
     </div>
   );
 };

@@ -5,7 +5,8 @@
   "scripts": {
     "server": "npm run dev --prefix backend",
     "client": "npm run dev --prefix frontend",
-    "build": "npm run build --prefix frontend"
+    "build": "npm run build --prefix frontend",
+    "test": "npm test --prefix backend"
   },
   "keywords": ["react", "express", "expense-tracker", "fullstack"],
   "author": "Medha Srinath",

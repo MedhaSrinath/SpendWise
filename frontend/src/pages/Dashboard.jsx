@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   TrendingUp,
   TrendingDown,
@@ -15,6 +15,7 @@ import BudgetSummaryCard from '../components/BudgetSummaryCard';
 import TransactionItem from '../components/TransactionItem';
 import AddExpenseModal from '../components/AddExpenseModal';
 import AddIncomeModal from '../components/AddIncomeModal';
+import EditTransactionModal from '../components/EditTransactionModal';
 
 export const Dashboard = () => {
   const [summary, setSummary] = useState(null);
@@ -23,26 +24,28 @@ export const Dashboard = () => {
 
   const [isExpenseModalOpen, setIsExpenseModalOpen] = useState(false);
   const [isIncomeModalOpen, setIsIncomeModalOpen] = useState(false);
+  const [editingTransaction, setEditingTransaction] = useState(null);
 
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = useCallback(async () => {
     try {
-      setLoading(true);
-      setError(null);
       const res = await api.getDashboardSummary();
       if (res.success) {
         setSummary(res.data);
       }
+      setError(null);
     } catch (err) {
       console.error('Error fetching dashboard summary:', err);
       setError('Could not connect to backend server. Make sure it is running on port 5000.');
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
+    // The fetch updates loading state only after its asynchronous request settles.
+    // eslint-disable-next-line react/set-state-in-effect
     fetchDashboardData();
-  }, []);
+  }, [fetchDashboardData]);
 
   const handleAddExpense = async (formData) => {
     await api.addExpense(formData);
@@ -59,6 +62,15 @@ export const Dashboard = () => {
       await api.deleteExpense(id);
     } else {
       await api.deleteIncome(id);
+    }
+    await fetchDashboardData();
+  };
+
+  const handleUpdateTransaction = async (formData) => {
+    if (editingTransaction.type === 'expense') {
+      await api.updateExpense(editingTransaction.id, formData);
+    } else {
+      await api.updateIncome(editingTransaction.id, formData);
     }
     await fetchDashboardData();
   };
@@ -88,6 +100,7 @@ export const Dashboard = () => {
   }
 
   const {
+    month = 'This Month',
     totalIncome = 0,
     totalExpense = 0,
     balance = 0,
@@ -106,7 +119,7 @@ export const Dashboard = () => {
             Expense Tracker Dashboard
           </h1>
           <p className="text-xs sm:text-sm text-gray-600 mt-1">
-            Overview of your cash flow, budget limits, and recent activity.
+            {month} overview of your cash flow, budget limits, and recent activity.
           </p>
         </div>
 
@@ -230,6 +243,7 @@ export const Dashboard = () => {
                   key={tx.id}
                   transaction={tx}
                   onDelete={handleDeleteTransaction}
+                  onEdit={setEditingTransaction}
                 />
               ))}
             </div>
@@ -301,6 +315,14 @@ export const Dashboard = () => {
         onClose={() => setIsIncomeModalOpen(false)}
         onAddIncome={handleAddIncome}
       />
+      {editingTransaction && (
+        <EditTransactionModal
+          key={editingTransaction.id}
+          transaction={editingTransaction}
+          onClose={() => setEditingTransaction(null)}
+          onSave={handleUpdateTransaction}
+        />
+      )}
     </div>
   );
 };

@@ -1,18 +1,19 @@
 import { expenses } from '../data/store.js';
+import { normalizeTransaction } from '../utils/transactionValidation.js';
 
-// GET all expenses (with optional query filter: category, search, timeFrame)
+// GET all expenses, optionally filtered by category and search text.
 export const getExpenses = (req, res) => {
   try {
-    const { category, search, timeFrame } = req.query;
+    const { category, search } = req.query;
     let filtered = [...expenses];
 
-    if (category && category !== 'All') {
+    if (typeof category === 'string' && category !== 'All') {
       filtered = filtered.filter(
         exp => exp.category.toLowerCase() === category.toLowerCase()
       );
     }
 
-    if (search && search.trim() !== '') {
+    if (typeof search === 'string' && search.trim() !== '') {
       const q = search.toLowerCase();
       filtered = filtered.filter(
         exp =>
@@ -38,31 +39,17 @@ export const getExpenses = (req, res) => {
 // POST a new expense
 export const addExpense = (req, res) => {
   try {
-    const { title, amount, category, date, paymentMethod, notes } = req.body;
-
-    if (!title || !amount || !category || !date) {
+    const result = normalizeTransaction(req.body, { paymentMethod: 'UPI', notes: '' });
+    if (result.error) {
       return res.status(400).json({
         success: false,
-        message: 'Please provide title, amount, category, and date.'
-      });
-    }
-
-    const numAmount = parseFloat(amount);
-    if (isNaN(numAmount) || numAmount <= 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'Amount must be a positive number.'
+        message: result.error,
       });
     }
 
     const newExpense = {
       id: `exp-${Date.now()}`,
-      title: title.trim(),
-      amount: numAmount,
-      category: category.trim(),
-      date,
-      paymentMethod: paymentMethod || 'UPI',
-      notes: notes ? notes.trim() : ''
+      ...result.value,
     };
 
     expenses.unshift(newExpense);
@@ -74,6 +61,33 @@ export const addExpense = (req, res) => {
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// PUT a full expense record by ID.
+export const updateExpense = (req, res) => {
+  try {
+    const expense = expenses.find(item => item.id === req.params.id);
+    if (!expense) {
+      return res.status(404).json({
+        success: false,
+        message: `Expense with id ${req.params.id} not found.`,
+      });
+    }
+
+    const result = normalizeTransaction(req.body, expense);
+    if (result.error) {
+      return res.status(400).json({ success: false, message: result.error });
+    }
+
+    Object.assign(expense, result.value);
+    return res.status(200).json({
+      success: true,
+      message: 'Expense updated successfully',
+      data: expense,
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
   }
 };
 
@@ -100,4 +114,3 @@ export const deleteExpense = (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
-
